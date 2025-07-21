@@ -30,6 +30,7 @@ public class PersonDisease {
 	private ExponentialDistribution clinicalDetectionDistribution;
 	private static PrintWriter decolWriter;
 	private static PrintWriter clinicalWriter;
+	public static int clinicalOutputNum;
 
 	static {
         try {
@@ -83,6 +84,7 @@ public class PersonDisease {
 		detected = true;
 		clinicallyDetectedDuringCurrentStay = true;
 		clinicalWriter.printf("Time: %.2f, Detected Patient: %d%n", currentTime, person.hashCode());
+		clinicalOutputNum++;
 		if (!person.isIsolated() && disease.isolatePatientWhenDetected()) {
 			person.isolate();
 			person.updateAllTransmissionRateContributions();

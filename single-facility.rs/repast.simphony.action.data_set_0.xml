@@ -41,6 +41,38 @@
       </repast.simphony.data2.engine.MethodDataSourceDefinition>
     </entry>
     <entry>
+      <string>ClinicalDetections</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>ClinicalDetections</id>
+        <className>builders.SingleFacilityBuilder</className>
+        <methodName>getClinicalDetections</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>MeanDailyPrevalence</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>MeanDailyPrevalence</id>
+        <className>builders.SingleFacilityBuilder</className>
+        <methodName>getMeanDailyPrevalence</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>MeanDischargePrevalence</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>MeanDischargePrevalence</id>
+        <className>builders.SingleFacilityBuilder</className>
+        <methodName>getMeanDischargePrevalence</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
+      <string>ImportationPrevalence</string>
+      <repast.simphony.data2.engine.MethodDataSourceDefinition>
+        <id>ImportationPrevalence</id>
+        <className>builders.SingleFacilityBuilder</className>
+        <methodName>getImportationPrevalence</methodName>
+      </repast.simphony.data2.engine.MethodDataSourceDefinition>
+    </entry>
+    <entry>
       <string>NumberOfTransmissions</string>
       <repast.simphony.data2.engine.MethodDataSourceDefinition>
         <id>NumberOfTransmissions</id>

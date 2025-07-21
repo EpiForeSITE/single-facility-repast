@@ -8,6 +8,10 @@
     <string>IsolationEffectiveness</string>
     <string>DaysBetweenTests</string>
     <string>tick</string>
+    <string>ClinicalDetections</string>
+    <string>MeanDailyPrevalence</string>
+    <string>MeanDischargePrevalence</string>
+    <string>ImportationPrevalence</string>
     <string>NumberOfTransmissions</string>
   </sourceIds>
   <fileName>sim_modeloutputs.txt</fileName>

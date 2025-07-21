@@ -1,8 +1,8 @@
-
 package builders;
 
 import disease.Disease;
 import disease.FacilityOutbreak;
+import disease.PersonDisease;
 import processes.Admission;
 import repast.simphony.context.Context;
 import repast.simphony.dataLoader.ContextBuilder;
@@ -20,6 +20,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 // Notes for TODO items:
 //find output number of clinicical detections to add to the batch outputs (raw number)
@@ -28,8 +30,6 @@ import java.io.Writer;
 //+ importation prevalence(patients importing at admission / total patients admitted)
 //these all go in 
 // Do several batches with days betweeen and DoActiveSurveillanceAfterBurnIn
-
-
 
 public class SingleFacilityBuilder implements ContextBuilder<Object> {
 	private ISchedule schedule;
@@ -46,8 +46,9 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 	public Facility facility;
 	private boolean stop = false;
 	private Parameters params;
+	private List<Double> dailyPrevalenceSamples = new ArrayList<>();
 
-	private Writer simulationOutputFile;
+	private PrintWriter simulationOutputFile;
 
 	@Override
 	public Context<Object> build(Context<Object> context) {
@@ -90,6 +91,17 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 			region.doPopulationTally();
 			region.logDailyPopulationStats();
 		}
+		double dailyPrevalence = 0.0;
+        int count = 0;
+        for (Facility f : region.getFacilities()) {
+            for (FacilityOutbreak outbreak : f.getOutbreaks()) {
+                dailyPrevalence += outbreak.getPrevalence();
+                count++;
+            }
+        }
+        if (count > 0) {
+            dailyPrevalenceSamples.add(dailyPrevalence / count);
+        }
 	}
 
 	public void setupAgents() {
@@ -158,7 +170,7 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 	}
 
 	public void doEndBurnInPeriod() {
-		
+
 		region.setInBurnInPeriod(false);
 		region.startDailyPopulationTallyTimer();
 		doActiveSurveillance = doActiveSurveillanceAfterBurnIn;
@@ -167,34 +179,32 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 				f.setTimeBetweenMidstaySurveillanceTests(daysBetweenTests);
 			}
 		}
-		
-		
+
 		scheduleSimulationEnd();
 	}
 
-	public void doSimulationEnd() throws IOException {
-		
-			
-			    simulationOutputFile = new FileWriter("simulation_results.txt", true);
-			   
-			
-			//simulationOutputFile.println(
-			//		"surveillance_after_burn_in, isolation_effectiveness, days_between_tests, number_of_transmissions");
+	public int getClinicalDetections() {
+		return PersonDisease.clinicalOutputNum;
+	}
 
-		
-			
-			    simulationOutputFile.append(doActiveSurveillanceAfterBurnIn + "," + isolationEffectiveness + "," + daysBetweenTests +","+ getNumberOfTransmissions() + "\n");
-			
-			
-			
-		
-		
+	public void doSimulationEnd() throws IOException {
+
+		simulationOutputFile = new PrintWriter("simulation_results.txt");
+
+		simulationOutputFile.println(
+				"surveillance_after_burn_in, isolation_effectiveness, days_between_tests, clinical_detections, mean_daily_prevalence, mean_discharge_prevalence, importation_prevalence, number_of_transmissions");
+
+		simulationOutputFile.println(doActiveSurveillanceAfterBurnIn + "," + isolationEffectiveness + ","
+				+ daysBetweenTests + "," + getClinicalDetections() + "," +getMeanDailyPrevalence() +","+getMeanDischargePrevalence()+","+getImportationPrevalence()+","+getNumberOfTransmissions() + "\n");
+		simulationOutputFile.flush();
+		simulationOutputFile.close();
+
 		stop = true;
 		System.out.println("Ending simulation at tick: " + schedule.getTickCount());
 
 		// writeSimulationResults();
 		region.finishSimulation();
-		//repast.simphony.engine.environment.RunEnvironment.getInstance().endAt(totalTime);
+		// repast.simphony.engine.environment.RunEnvironment.getInstance().endAt(totalTime);
 		repast.simphony.engine.environment.RunEnvironment.getInstance().endRun();
 		System.out.println("Simulation ended.");
 
@@ -209,7 +219,7 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 	 * facilityPrevalenceData.println(); } R0Data.printf("%d",
 	 * region.numTransmissionsFromInitialCase); R0Data.println(); }
 	 */
-	
+
 	public int getNumberOfTransmissions() {
 		int numberOfTransmissions = 0;
 		for (Facility f : region.getFacilities()) {
@@ -219,6 +229,37 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 		}
 		return numberOfTransmissions;
 	}
+
+	public double getMeanDailyPrevalence() {
+	    if (dailyPrevalenceSamples.isEmpty()) return 0.0;
+	    double sum = 0.0;
+	    for (double val : dailyPrevalenceSamples) sum += val;
+	    return sum / dailyPrevalenceSamples.size();
+	}
+
+    public double getMeanDischargePrevalence() {
+        double totalDischargePrevalence = 0.0;
+        int count = 0;
+        for (Facility f : region.getFacilities()) {
+            for (FacilityOutbreak outbreak : f.getOutbreaks()) {
+                totalDischargePrevalence += outbreak.getAvgDischargePrevalence();
+                count++;
+            }
+        }
+        return count > 0 ? totalDischargePrevalence / count : 0.0;
+    }
+
+    public double getImportationPrevalence() {
+        double totalImportationPrevalence = 0.0;
+        int count = 0;
+        for (Facility f : region.getFacilities()) {
+            for (FacilityOutbreak outbreak : f.getOutbreaks()) {
+                totalImportationPrevalence += outbreak.getImportationRate();
+                count++;
+            }
+        }
+        return count > 0 ? totalImportationPrevalence / count : 0.0;
+    }
 
 	public ISchedule getSchedule() {
 		return schedule;
