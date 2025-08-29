@@ -45,6 +45,56 @@
 						isReadOnly="false" 
 						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
 											/>
+				<parameter name="avgDecolonizationTime" displayName="Average Decolonization Time" type="double" 
+						defaultValue="387.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
+				<parameter name="acuteCareMeanDetectionTime" displayName="Acute Care Mean Detection Time" type="double" 
+						defaultValue="122.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
+				<parameter name="longTermAcuteCareMeanDetectionTime" displayName="Long Term Acute Care Mean Detection Time" type="double" 
+						defaultValue="106.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
+				<parameter name="nursingHomeDetectionTimeFactor" displayName="Nursing Home Detection Time Factor" type="double" 
+						defaultValue="8.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
+				<parameter name="allowImportationsDuringBurnIn" displayName="Allow Importations During Burn In" type="boolean" 
+						defaultValue="false" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+											/>
+				<parameter name="isolatePatientWhenDetected" displayName="Isolate Patient When Detected" type="boolean" 
+						defaultValue="true" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+											/>
+				<parameter name="isActiveSurveillanceAgent" displayName="Is Active Surveillance Agent" type="boolean" 
+						defaultValue="true" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$BooleanConverter"
+											/>
+				<parameter name="probSurveillanceDetection" displayName="Probability of Surveillance Detection" type="double" 
+						defaultValue="0.8" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
+				<parameter name="diseaseName" displayName="Disease Name" type="String" 
+						defaultValue="CRE" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$StringConverter"
+											/>
+				<parameter name="nursingHomeBetaReduction" displayName="Nursing Home Beta Reduction Factor" type="double" 
+						defaultValue="10.0" 
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$DoubleConverter"
+											/>
 		</parameters>
 
 

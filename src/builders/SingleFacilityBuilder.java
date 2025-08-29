@@ -162,7 +162,7 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 		// System.out.println("Setting up AGENTS");
 
 		int numDiseases = 1;
-		int[] diseaseList = { (int) Disease.getCRE() };
+		int[] diseaseList = { 1 }; // Generic disease type ID
 		for (int i = 0; i < numDiseases; i++) {
 			Disease disease = new Disease();
 			disease.setSimIndex(i);
