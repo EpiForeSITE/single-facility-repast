@@ -150,7 +150,6 @@ public class PersonDisease {
 		}
 	}
 	public void resetClinicalDetectionEvent() {
-		detected = false;
 		clinicallyDetectedDuringCurrentStay = false;
 		if (clinicalDetectionDistribution != null) {
 			double timeToDetection = clinicalDetectionDistribution.sample();

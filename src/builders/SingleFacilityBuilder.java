@@ -104,22 +104,6 @@ public class SingleFacilityBuilder implements ContextBuilder<Object> {
 			region.doPopulationTally();
 			region.logDailyPopulationStats();
 		}
-		// Calculate daily infected and clinical detections
-		int dailyInfected = 0;
-		int dailyClinicalDetections = 0;
-		for (agents.Person p : region.getPeople()) {
-			for (PersonDisease pd : p.getDiseases()) {
-				if (pd.isColonized()) dailyInfected++;
-				if (pd.isClinicallyDetectedDuringCurrentStay()) dailyClinicalDetections++;
-			}
-		}
-		sumDailyInfected += dailyInfected;
-		sumDailyClinicalDetections += dailyClinicalDetections;
-		if (!isBatchRun && dailyStatsWriter != null) {
-			double currentTime = schedule.getTickCount();
-			dailyStatsWriter.printf("Time: %.2f, Infected: %d, ClinicalDetections: %d%n", currentTime, dailyInfected, dailyClinicalDetections);
-			dailyStatsWriter.flush();
-		}
 		double dailyPrevalence = 0.0;
         int count = 0;
         for (Facility f : region.getFacilities()) {
