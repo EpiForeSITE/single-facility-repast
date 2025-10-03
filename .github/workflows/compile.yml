@@ -1,0 +1,202 @@
+---
+name: Compile Simulation
+
+'on':
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Cache Repast Simphony
+        id: cache-repast
+        uses: actions/cache@v4
+        with:
+          path: ~/repast-simphony
+          key: repast-simphony-2.11.0
+
+      - name: Download and extract Repast Simphony
+        if: steps.cache-repast.outputs.cache-hit != 'true'
+        run: |
+          echo "Downloading Repast Simphony 2.11.0..."
+          mkdir -p ~/repast-simphony
+          cd ~/repast-simphony
+
+          # Try multiple download locations
+          # Based on suggestion: https://repast.github.io/download.html
+          echo "Attempting download from multiple sources..."
+
+          # Array of URLs to try
+          URLS=(
+            "https://github.com/Repast/repast.simphony/releases/download/v.2.11.0/Repast-Simphony-2.11.0-linux.tgz"
+            "https://github.com/Repast/repast.simphony/releases/download/v2.11.0/Repast-Simphony-2.11-linux.tgz"
+            "https://github.com/Repast/repast.simphony/releases/download/v.2.11.0/Repast-Simphony-2.11.0-linux.tgz"
+            "https://github.com/Repast/repast.simphony/releases/download/v2.11.0/Repast-Simphony-2.11.0-linux.tgz"
+            "https://repast.github.io/download/Repast-Simphony-2.11-linux.tgz"
+            "https://raw.githubusercontent.com/Repast/repast.simphony/gh-pages/download/Repast-Simphony-2.11-linux.tgz"
+          )
+
+          SUCCESS=false
+          for URL in "${URLS[@]}"; do
+            echo "Trying: $URL"
+            if wget -O repast-simphony-2.11.tgz "$URL" 2>&1 | tee download.log; then
+              # Check if file is valid
+              if file repast-simphony-2.11.tgz | grep -q "gzip compressed"; then
+                echo "✓ Download successful from: $URL"
+                SUCCESS=true
+                break
+              else
+                echo "✗ File not valid gzip, trying next URL..."
+                rm -f repast-simphony-2.11.tgz
+              fi
+            else
+              echo "✗ Download failed, trying next URL..."
+              rm -f repast-simphony-2.11.tgz
+            fi
+          done
+
+          if [ "$SUCCESS" = false ]; then
+            echo ""
+            echo "ERROR: Could not download Repast Simphony from any source"
+            echo ""
+            echo "Tried URLs:"
+            for URL in "${URLS[@]}"; do
+              echo "  - $URL"
+            done
+            echo ""
+            echo "Alternative solutions:"
+            echo "1. Upload Repast-Simphony-2.11-linux.tgz as a GitHub Release asset in this repository"
+            echo "2. Check https://repast.github.io/download.html for the correct download URL"
+            echo "3. Add required domains to firewall allowlist"
+            exit 1
+          fi
+
+          # Extract the downloaded file
+          echo "Extracting Repast Simphony..."
+          tar -xzf repast-simphony-2.11.tgz
+          echo "Extraction successful"
+          ls -la
+
+      - name: Verify Repast installation
+        run: |
+          echo "Checking Repast installation..."
+          ls -la ~/repast-simphony/
+          if [ -d ~/repast-simphony/repast-simphony-2.11 ]; then
+            echo "Found Repast directory"
+            ls -la ~/repast-simphony/repast-simphony-2.11/
+          elif [ -d ~/repast-simphony/Repast-Simphony-2.11 ]; then
+            echo "Found Repast directory (alt name)"
+            ls -la ~/repast-simphony/Repast-Simphony-2.11/
+          else
+            echo "Searching for Repast installation..."
+            find ~/repast-simphony -maxdepth 3 -type d \
+              -name "*eclipse*" -o -name "*plugin*"
+          fi
+
+      - name: Create bin directory
+        run: mkdir -p bin
+
+      - name: Configure Repast path for compilation
+        run: |
+          # Find the actual Repast installation directory
+          if [ -d ~/repast-simphony/repast-simphony-2.11 ]; then
+            REPAST_DIR=~/repast-simphony/repast-simphony-2.11
+          elif [ -d ~/repast-simphony/Repast-Simphony-2.11 ]; then
+            REPAST_DIR=~/repast-simphony/Repast-Simphony-2.11
+          else
+            # Find it dynamically
+            REPAST_DIR=$(find ~/repast-simphony -maxdepth 2 -type d \
+              -name "*epast*" -o -name "*imphony*" | head -1)
+          fi
+
+          echo "REPAST_HOME=$REPAST_DIR" >> $GITHUB_ENV
+          echo "Repast home set to: $REPAST_DIR"
+
+      - name: Compile simulation
+        run: |
+          echo "Compiling simulation with Repast at $REPAST_HOME..."
+
+          # Set up the classpath similar to Makefile
+          REPAST_PLUGINS_DIR="$REPAST_HOME/eclipse/plugins"
+
+          if [ ! -d "$REPAST_PLUGINS_DIR" ]; then
+            echo "ERROR: Cannot find Repast plugins directory"
+            echo "  at $REPAST_PLUGINS_DIR"
+            echo "Searching for plugins..."
+            find ~/repast-simphony -type d -name "plugins"
+            exit 1
+          fi
+
+          echo "Using plugins directory: $REPAST_PLUGINS_DIR"
+
+          # Build classpath
+          JAR_PATH="$REPAST_PLUGINS_DIR/"
+          JAR_PATH="${JAR_PATH}repast.simphony.bin_and_src_2.11.0/"
+          JAR_PATH="${JAR_PATH}repast.simphony.bin_and_src.jar"
+          BIN_JAR="$JAR_PATH"
+
+          if [ ! -f "$BIN_JAR" ]; then
+            echo "ERROR: Cannot find main Repast JAR at $BIN_JAR"
+            echo "Available plugins:"
+            ls -la "$REPAST_PLUGINS_DIR" | grep repast || \
+              echo "No repast plugins found"
+            exit 1
+          fi
+
+          CLASSPATH="bin:$BIN_JAR"
+          RT="$REPAST_PLUGINS_DIR/repast.simphony.runtime_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$RT"
+          CO="$REPAST_PLUGINS_DIR/repast.simphony.core_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$CO"
+          BA="$REPAST_PLUGINS_DIR/repast.simphony.batch_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$BA"
+          DA="$REPAST_PLUGINS_DIR/repast.simphony.data_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$DA"
+          ES="$REPAST_PLUGINS_DIR/repast.simphony.essentials_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$ES"
+          LI="$REPAST_PLUGINS_DIR/libs.ext_2.11.0/lib/*"
+          CLASSPATH="$CLASSPATH:$LI"
+
+          echo "Classpath configured"
+
+          # Compile all Java files
+          echo "Compiling Java sources..."
+          find src -name "*.java" -print | \
+            xargs javac -cp "$CLASSPATH" -d bin
+
+          echo "Compilation complete!"
+
+      - name: Verify compilation
+        run: |
+          echo "Checking compiled classes..."
+          find bin -name "*.class" | head -20
+          CLASS_COUNT=$(find bin -name "*.class" | wc -l)
+          echo "Total compiled classes: $CLASS_COUNT"
+
+          if [ $CLASS_COUNT -eq 0 ]; then
+            echo "ERROR: No classes were compiled!"
+            exit 1
+          else
+            MSG="SUCCESS: Compilation completed with "
+            MSG="${MSG}$CLASS_COUNT classes"
+            echo "$MSG"
+          fi
